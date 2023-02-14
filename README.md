@@ -24,7 +24,7 @@
 ---
 ### Inference
 
-- not fully complete but inferect can be removed from ``train.py`` and put into its own script.
+- Run ``inference.py`` with ``-i`` as an argumentand with models path.
 
 ### Logging
 - Output plot graphs will be avalible in the next version.

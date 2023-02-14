@@ -4,6 +4,7 @@ from GPTXRL.enviroment import TextEnv
 from multiprocessing import Process
 from tqdm import tqdm
 import numpy as np
+import argparse
 import random
 import pickle
 import torch
@@ -65,76 +66,10 @@ class Trainer:
         print('=========== ======== ===========')
         print()
     
-    def load(self):
-        print('Loading train data.')
-        with open(self.train_path, 'r') as f:
-            self.train_data = self.tokenizer.tokenize(f.read())
-        print('Tokenizing data.')
-        self.train_data = np.array_split(self.train_data, np.ceil(self.train_data.shape[0]/self.context_size))
-        print('Data tokenized.')
-
-    def get_block(self, specific_index=-1, location=-1):
-        # Gets specific index.
-        specific_chunk = random.choice(self.train_data)
-        # Gets second chunk.
-        choice = random.randrange(1, 7)
-        split_chunk = np.array_split(specific_chunk, choice)
-        return random.choice(split_chunk)
-
-    def train(self):
-        env = TextEnv(self.context_size)
-        scores = []
-        total_steps = 0
-        for epoch in range(self.epochs+1):
-            tdq = tqdm(range(self.steps), unit='step', desc='Step',ncols=122)
-            for s in tdq:
-                score = 0
-                done = False
-                text_block = self.get_block()
-                for _ in range(self.reruns):
-                    observation = env.reset(text_block[:-1])
-                    while not done:
-                        action = self.agent.choose_action(observation)
-                        observation_, reward, done, won, n_games = env.step(action, text_block[-1:])
-                        score += reward
-                        self.agent.store_transition(observation, action, reward, observation_, done)
-                        loss = self.agent.learn()
-                        observation = observation_
-                        total_steps += 1
-                    scores.append(score)
-                    avg_score = np.mean(scores[-100:])
-                tdq.set_description('Epoch ('+str(epoch)+'/'+str(self.epochs)+') Step')
-                tdq.set_postfix({"Epsilon": str(round(self.agent.epsilon, 4)), 'Average Score': round(avg_score), 'Won':won, 'Total': total_steps})
-            if epoch % self.epoch_set == 0:
-                print('Epoch Set Complete! - Last Score:', score, 'Average:', round(avg_score), 'Epsilon', round(self.agent.epsilon, 4), 'Won', won, 'N_Games', n_games, 'Loss', loss if loss == None else round(loss, 4), 'Total:', total_steps)
-                print('Saving Model...')
-                self.save_model()
-                self.test_run()
-        self.inference()
-
-    def save_model(self):
-        pickled = pickle.dumps(self.agent)
-        with open('GPTX-RL-'+self.format_params()+'.pkl', 'wb+') as f:
-            f.write(pickled)
-
-    def test_run(self):
-        print('==== Running Test Run ====')
-        text_block = self.get_block()
-        env = TextEnv(self.context_size)
-        score= 0
-        observation = env.reset(text_block[:-1])
-
-        action = self.agent.choose_action(observation)
-        observation_, reward, done, won, n_games = env.step(action, text_block[-1:][0], inference=True)
-        score += reward
-
-        genned = np.append(text_block[:-1], action)
-
-        print('Should:', self.tokenizer.detokenize(text_block))
-        print('Genned:', self.tokenizer.detokenize(genned))
-        print('Gen on:', self.tokenizer.detokenize(text_block[:-1]))
-        print('Test Run', 'Score', score, 'Epsilon', self.agent.epsilon, 'Won', won)
-        print('==== Test Complete ====')
+    def load(self, model:str):
+        print('Loading model.')
+        with open(model, 'rb') as f:
+            self.agent = pickle.loads(f.read())
 
     def inference(self):
         while True:
@@ -156,8 +91,11 @@ class Trainer:
             print('==== Inference Complete ====')
 
 def main():
+    parser = argparse.ArgumentParser(description="GPTX-RL Inference Runner v1.0")
+    parser.add_argument("-i", "--input", default=None, help = "Input model file")
+    args = parser.parse_args()
     trainer = Trainer()
-    trainer.load()
+    trainer.load(args.input)
     trainer.print_model_stats()
     trainer.train()
 

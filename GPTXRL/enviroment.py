@@ -30,13 +30,13 @@ class TextEnv:
         reward = -1
 
         if action == actual_next:
-            reward = 250
+            reward = 100
             done = True
             won = True
 
-        if self.n_games >= 64 and inference == False:
+        if self.n_games >= 32 and inference == False:
             done = True
-            reward = -250
+            reward = -100
         self.n_games += 1
         return self.get_observation(), int(reward), done, won, self.n_games
 

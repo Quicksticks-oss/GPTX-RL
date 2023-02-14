@@ -33,7 +33,7 @@ def main(input_file, output_file, full):
 
 if __name__ == '__main__':
     print('State-RL Vocab Generator v1.0')
-    parser = argparse.ArgumentParser(description="State-RL Vocab Generator v1.0")
+    parser = argparse.ArgumentParser(description="GTPX-RL Vocab Generator v1.0")
     parser.add_argument("-i", "--input", default=None, help = "Input txt file")
     parser.add_argument("-o", "--output", default='vocab.json', help = "Output vocab file")
     parser.add_argument("-full", "--full", default=False, help = "(true or false) this will return the full vocab without removal of dupes. (might break)")

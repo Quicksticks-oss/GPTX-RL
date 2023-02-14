@@ -11,6 +11,10 @@ class Tokenizer:
             self.vocab = json.loads(f.read())['vocab']
 
     def tokenize(self, string, should_continue=False):
+        characters = list(repr(string))
+        characters.pop(0)
+        characters.pop(len(characters)-1)
+        characters = ''.join(characters)
         characters = string.split()
         tokens = []
 
